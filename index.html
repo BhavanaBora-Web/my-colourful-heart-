@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000000">
+  <title>My Colourful Heart ❤️</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      min-height: 100%;
+      background: #000;
+      overflow: hidden;
+      color: white;
+      font-family: system-ui, sans-serif;
+    }
+    body {
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 82svh;
+      max-height: 850px;
+    }
+    .caption {
+      text-align: center;
+      padding: 0 16px 14px;
+      font-size: clamp(13px, 3.5vw, 17px);
+      color: #ffb6e6;
+      letter-spacing: .04em;
+    }
+    .replay {
+      position: fixed;
+      bottom: max(12px, env(safe-area-inset-bottom));
+      right: 12px;
+      border: 1px solid #ff8bd6;
+      background: #171017;
+      color: #ffd9f1;
+      border-radius: 999px;
+      padding: 10px 15px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="heart" aria-label="A colourful heart drawn with rainbow lines"></canvas>
+  <div class="caption">A little heart, made with LOVE ❤️</div>
+  <button class="replay" id="replay" type="button">Draw again ↻</button>
+  <script>
+    // A browser version of the user's Python Turtle heart.
+    const canvas = document.getElementById('heart');
+    const ctx = canvas.getContext('2d');
+    const colors = ['red', 'blue', 'lime', 'yellow', 'cyan', 'magenta', 'orange', 'pink'];
+    let animationFrame;
+    let resizeTimer;
+
+    function drawHeart() {
+      cancelAnimationFrame(animationFrame);
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, rect.width, rect.height);
+
+      // Scale the original Turtle coordinates to fit both phones and laptops.
+      const scale = Math.min(rect.width / 520, rect.height / 570, 1.15);
+      const cx = rect.width / 2;
+      const cy = rect.height / 2 + 8;
+      const total = 120;
+      let i = 0;
+
+      function lineStep() {
+        const batch = 1; // One ray at a time, so the heart draws slowly.
+        for (let n = 0; n < batch && i < total; n++, i++) {
+          const angle = i * (Math.PI * 2) / total;
+          const x = 16 * (Math.sin(angle) ** 3) * 15;
+          const y = (13 * Math.cos(angle)
+            - 5 * Math.cos(2 * angle)
+            - 2 * Math.cos(3 * angle)
+            - Math.cos(4 * angle)) * 15;
+
+          const color = colors[Math.floor(Math.random() * colors.length)];
+          const endX = cx + x * scale;
+          const endY = cy - y * scale;
+          const startX = cx;
+          const startY = cy - 40 * scale;
+
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1.5;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(startX, startY);
+          ctx.lineTo(endX, endY);
+          ctx.stroke();
+
+          // Small starburst at the end, inspired by the Python Turtle loop.
+          ctx.save();
+          ctx.translate(endX, endY);
+          ctx.rotate(Math.random() * Math.PI);
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1.7;
+          for (let k = 0; k < 8; k++) {
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, -6 * Math.max(.7, scale));
+            ctx.stroke();
+            ctx.rotate(Math.PI / 4);
+          }
+          ctx.restore();
+        }
+        if (i < total) {
+          // Pause briefly between rays to make the drawing feel more meaningful.
+          setTimeout(() => {
+            animationFrame = requestAnimationFrame(lineStep);
+          }, 45);
+        }
+      }
+      animationFrame = requestAnimationFrame(lineStep);
+    }
+
+    document.getElementById('replay').addEventListener('click', drawHeart);
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(drawHeart, 150);
+    });
+    drawHeart();
+  </script>
+</body>
+</html>
